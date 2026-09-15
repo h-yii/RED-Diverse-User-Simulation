@@ -1,0 +1,46 @@
+sft_model_path: outputs/sft/merged
+train_file: data/grpo_train.jsonl
+eval_file: data/grpo_eval.jsonl
+output_dir: outputs/grpo
+seed: 42
+num_generations: 8
+max_completion_length: 256
+learning_rate: 0.000005
+num_train_epochs: 1
+per_device_train_batch_size: 32
+gradient_accumulation_steps: 1
+num_iterations: 2
+epsilon: 0.2
+temperature: 0.9
+top_p: 0.95
+beta: 1.5
+alpha: 0.15
+diversity_reward_weight: 1.0
+scale_rewards: group
+loss_type: dapo
+logging_steps: 50
+save_steps: 250
+save_total_limit: 6
+bf16: true
+gradient_checkpointing: true
+use_lora: false
+embedding:
+  backend: model
+  model_path: models/embedding-model
+  device: cuda
+  batch_size: 8
+  dimension: 1024
+  ngram_min: 2
+  ngram_max: 4
+  max_length: 256
+reward:
+  semantic_weight: 0.80
+  lexical_weight: 0.10
+  validity_weight: 0.10
+  empty_penalty: 1.0
+  role_leak_penalty: 0.5
+  repetition_penalty: 0.3
+  min_chars: 2
+  max_chars: 180
+  renyi_eps: 0.00000001
+  jitter: 0.000001
