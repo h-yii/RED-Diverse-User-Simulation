@@ -4,13 +4,9 @@ This repository contains an research implementation for training and evaluating 
 
 ## 1. Overview
 
-A user simulator models the conditional response distribution
+A user simulator generates the next user response conditioned on the dialogue context, such as the user profile and dialogue history. Standard SFT can produce realistic responses but may concentrate on a small number of dominant response patterns.
 
-\[
-\pi_\theta(y \mid x),
-\]
-
-where \(x\) is a dialogue context (e.g., user profile plus dialogue history) and \(y\) is the simulated user's next response. Standard SFT can produce realistic responses but may concentrate probability mass on a small number of dominant response modes. This project targets **within-context semantic diversity**: when the same context is sampled repeatedly, the generated responses should cover more distinct semantic modes rather than being minor paraphrases of one another.
+This project focuses on **within-context semantic diversity**: when the same dialogue context is sampled repeatedly, the generated responses should cover more distinct semantic modes rather than being minor paraphrases of one another.
 
 The training pipeline is:
 
