@@ -4,7 +4,7 @@ This repository contains an research implementation for training and evaluating 
 
 ## 1. Overview
 
-A user simulator generates the next user response conditioned on the dialogue context, such as the user profile and dialogue history. Standard SFT can produce realistic responses but may concentrate on a small number of dominant response patterns.
+A user simulator generates the next user response conditioned on the dialogue context. Standard SFT can produce realistic responses but may concentrate on a small number of dominant response patterns.
 
 This project focuses on **within-context semantic diversity**: when the same dialogue context is sampled repeatedly, the generated responses should cover more distinct semantic modes rather than being minor paraphrases of one another.
 
@@ -26,11 +26,6 @@ Rényi-2 group diversity / leave-one-out marginal reward
 GRPO post-training with a reference-model KL constraint
 ```
 
-The repository also includes an evaluation script that repeatedly samples each context and reports:
-
-- **RED / 1-U**: a Rényi-inspired effective diversity statistic computed from normalized response embeddings.
-- **Self-BLEU**: lexical overlap among repeated samples; lower values indicate greater surface-form diversity.
-- **LLM-judge quality**: the proportion of generated responses accepted by a binary quality judge.
 
 ## 2. Repository Structure
 
@@ -51,10 +46,62 @@ RED-Diverse-User-Simulation/
     └── train_sft.py             # SFT training entry point
 ```
 
-Training data, model checkpoints, and private evaluation data are **not included**. Configure local paths before running the code.
+Training data, model checkpoints, and evaluation data are not included in the current release. The relevant data will be released in a future update. Please configure local paths before running the code.
+
+## 3. Data Format
+
+Training data, model checkpoints, and evaluation data are not included in the current release. **The datasets used in this work will be released in a future update.** Please configure local paths before running the code.
+
+The dataset is stored in JSONL format, with one training example per line. Each example contains the dialogue prompt, the target user response, and auxiliary metadata used during training and evaluation.
+
+A simplified and anonymized example is shown below:
+
+```json
+{
+  "id": "session_000106:2",
+  "session_id": "session_000106",
+  "prompt": [
+    {
+      "role": "system",
+      "content": "You are simulating a real user in a telephone dialogue. Generate the user's next natural, concise, and conversational response based on the user profile and dialogue history."
+    },
+    {
+      "role": "user",
+      "content": "Hello, may I confirm that I am speaking with you?"
+    }
+  ],
+  "completion": [
+    {
+      "role": "assistant",
+      "content": "Yes, who is this?"
+    }
+  ],
+  "ground_truth": "Yes, who is this?",
+  "user_info": "Gender: male; overdue duration: long-term; region: ...; financial attributes: ...",
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  }
+}
+```
+
+The main fields are:
+
+- `id`: unique identifier of the current dialogue turn.
+- `session_id`: identifier shared by turns from the same dialogue session.
+- `prompt`: model input in chat format, including the system instruction and dialogue context.
+- `completion`: target next-user response in chat-template format.
+- `ground_truth`: plain-text target response used for evaluation or preprocessing.
+- `user_info`: structured or serialized user-profile information associated with the dialogue.
+- `chat_template_kwargs`: optional arguments passed to the model chat template.
+
+For SFT, the model learns to generate `completion` conditioned on `prompt`.
+
+For GRPO training, only the dialogue context is required as input. The current policy samples multiple responses for the same prompt during training, and the sampled responses are used to compute the group-level Rényi diversity reward. Therefore, multiple candidate responses do not need to be precomputed in the dataset.
+
+The public dataset released in a future update will follow the same general JSONL structure and preprocessing conventions expected by the training scripts in this repository.
 
 
-## 3. Supervised Fine-Tuning
+## 4. Supervised Fine-Tuning
 
 Edit `configs/sft.yaml` as needed, then run:
 
@@ -76,7 +123,7 @@ use_lora: true
 
 This path is used as the default starting point for GRPO.
 
-## 4. Rényi-Guided GRPO
+## 5. Rényi-Guided GRPO
 
 Edit `configs/grpo.yaml`, especially model/data paths and GPU-sensitive batch sizes, then run:
 
@@ -107,7 +154,7 @@ loss_type: dapo
 
 `beta > 0` is required by the training script so that optimization remains constrained relative to the reference/SFT policy.
 
-## 5. Reproducibility Notes
+## 6. Reproducibility Notes
 
 - Default random seeds are fixed in the training and evaluation scripts.
 - Diversity metrics depend on the embedding model, embedding dimensionality, sampling temperature, top-p/top-k settings, and number of repeated samples. Keep these fixed when comparing systems.
